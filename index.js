@@ -108,7 +108,7 @@ async function getDownloadUrlForVersion(version) {
       core.setFailed('No assets found in the release version ' + version);
     }
     for (let i = 0; i < assets.length; i++) {
-      if (assets[i].name.includes(assetName) && 
+      if (assets[i].name.includes(assetName + '_') && 
           assets[i].name.includes(mapOS(platform)) && 
           assets[i].name.includes(mapArch(os.arch())) && 
           assets[i].name.includes('.zip')) {
