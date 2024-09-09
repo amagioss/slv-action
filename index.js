@@ -181,6 +181,12 @@ async function getSecrets(vaultFile, slvEnvSecretKey) {
 async function injectSecrets() {
   const slvEnvSecretKey = core.getInput('env-secret-key');
   const vaultFile = core.getInput('vault');
+  const selectiveStr = core.getInput('selective');
+  let selectiveSet = new Set(
+    selectiveStr
+      ? selectiveStr.split(',').map(item => item.trim())
+      : []
+  );
   if (vaultFile) {
     if (!slvEnvSecretKey) {
       core.setFailed('SLV environment secret key is required');
@@ -191,8 +197,11 @@ async function injectSecrets() {
       prefix = '';
     }
     for (const key in secrets) {
-      core.setSecret(secrets[key]);
-      core.exportVariable(prefix + key, secrets[key]);
+      const prefixedKey = prefix + key
+      if (selectiveSet.size === 0 || selectiveSet.has(key) || selectiveSet.has(prefixedKey)) {
+        core.setSecret(secrets[key]);
+        core.exportVariable(prefixedKey, secrets[key]);
+      }
     }
   }
 }
