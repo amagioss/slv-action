@@ -171,9 +171,23 @@ async function getSecrets(vaultFile, slvEnvSecretKey) {
     silent: true,
     ignoreReturnCode: true
   };
-  const execOutput = await exec.getExecOutput('slv', ['vault', 'export', '-v', vaultFile, '--format', 'json'], options);
+  let withMetadata = true;
+  let execOutput = await exec.getExecOutput('slv', ['vault', 'export', '-v', vaultFile, '--format', 'json', '--with-metadata'], options);
+  if (execOutput.exitCode !== 0) {
+    execOutput = await exec.getExecOutput('slv', ['vault', 'export', '-v', vaultFile, '--format', 'json'], options);
+    withMetadata = false;
+  }
   if (execOutput.exitCode === 0) {
-    return JSON.parse(execOutput.stdout);
+    let vaultData = JSON.parse(execOutput.stdout);
+    if (!withMetadata) {
+      for (const key in vaultData) {
+        vaultData[key] = {
+          value: vaultData[key],
+          secret: true
+        };
+      }
+    }
+    return vaultData;
   }
   core.setFailed('Failed to get secrets: ' + execOutput.stderr);
 }
@@ -191,16 +205,18 @@ async function injectSecrets() {
     if (!slvEnvSecretKey) {
       core.setFailed('SLV environment secret key is required');
     }
-    const secrets = await getSecrets(vaultFile, slvEnvSecretKey);
+    const vaultData = await getSecrets(vaultFile, slvEnvSecretKey);
     let prefix = core.getInput('prefix');
     if (!prefix) {
       prefix = '';
     }
-    for (const key in secrets) {
+    for (const key in vaultData) {
       const prefixedKey = prefix + key
       if (selectiveSet.size === 0 || selectiveSet.has(key) || selectiveSet.has(prefixedKey)) {
-        core.setSecret(secrets[key]);
-        core.exportVariable(prefixedKey, secrets[key]);
+        if (vaultData[key].secret) {
+          core.setSecret(vaultData[key].value);
+        }
+        core.exportVariable(prefixedKey, vaultData[key].value);
       }
     }
   }

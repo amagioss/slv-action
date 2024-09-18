@@ -1,4 +1,4 @@
-name: SLV Action
+name: SLV
 description: Sets up the SLV CLI and helps in injecting vault secrets as masked environment variables for workflows to consume.
 inputs:
   version:
