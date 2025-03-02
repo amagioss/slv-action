@@ -32,15 +32,16 @@ async function findInstalledVersion() {
     const execOutput = await exec.getExecOutput('slv', ['--version'], options);
     let installedVersion = '';
     const lines = execOutput.stdout.split("\n");
-    lines.forEach(line => {
-      if (line.toLowerCase().includes("slv version")) {
+    for (const line of lines) {
+      if (line.toLowerCase().includes("version")) {
         installedVersion = line.split(':')[1];
         installedVersion = installedVersion.trim();
         if (installedVersion.startsWith('v')) {
           installedVersion = installedVersion.slice(1);
         }
+        break;
       }
-    });
+    }
     core.saveState('SLV_VERSION_INSTALLED', installedVersion);
     return installedVersion;
   } catch (error) {

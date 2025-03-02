@@ -1,11 +1,10 @@
 {
-  "name": "slv",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "name": "slv-action",
+  "description": "This action downloads and sets up the SLV CLI and helps in injecting vault secrets as masked environment variables for workflows to consume",
+  "main": "action.js",
   "scripts": {
     "lint": "eslint .",
-    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "prepare": "ncc build action.js -o dist --source-map --license licenses.txt",
     "test": "jest",
     "all": "npm run lint && npm run prepare && npm run test"
   },
