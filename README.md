@@ -11,7 +11,7 @@ Only setup the [`slv`](slv) CLI:
 ```yaml
 steps:
 - name: Setup SLV
-  uses: amagioss/slv-action@main
+  uses: amagioss/slv-action@v1
 ```
 
 A specific version of the [`slv`](slv) CLI can also be installed:
@@ -19,7 +19,7 @@ A specific version of the [`slv`](slv) CLI can also be installed:
 ```yaml
 steps:
 - name: Setup SLV
-  uses: amagioss/slv-action@main
+  uses: amagioss/slv-action@v1
   with:
     version: 0.1.5
 ```
@@ -29,7 +29,7 @@ Load SLV secrets into environment variables:
 ```yaml
 steps:
 - name: Load SLV Secrets
-  uses: amagioss/slv-action@main
+  uses: amagioss/slv-action@v1
   with:
     vault: pets.slv.yml
     env-secret-key: ${{ secrets.SLV_ENV_SECRET_KEY }}
@@ -40,7 +40,7 @@ Optionally specify a prefix that will be added to the environment variables in f
 ```yaml
 steps:
 - name: Load SLV Secrets - PROD
-  uses: amagioss/slv-action@main
+  uses: amagioss/slv-action@v1
   with:
     version: 0.1.5
     vault: pets.slv.yml
