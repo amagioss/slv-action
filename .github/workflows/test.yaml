@@ -2,26 +2,30 @@ name: Tests
 
 on:
   push:
+    paths:
+    - 'action/*'
+    - 'action.yaml'
     branches:
     - main
   pull_request:
+    paths:
+    - 'action/*'
+    - 'action.yaml'
   workflow_dispatch:
 
 defaults:
   run:
     shell: bash
 
-env:
-  KNOWN_TEST_SECRET: Kuwan
-
 jobs:
-  test:
-    name: Test
+
+  test-action:
+    name: Test Action
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        version: [0.3.0, 0.5.6]
+        version: ['0.8.0', '0.9.2']
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -45,16 +49,30 @@ jobs:
             int(not os.environ["SLV_VERSION_EXPECTED"] in os.environ["SLV_VERSION_INSTALLED"])
         )
 
-    - name: Add a known secret to existing vault
+    - name: Create a new SLV Environment
+      id: new-slv-env
       run: |
-        slv vault put -v pets.slv.yml --name AWESOME_CAT --secret "$KNOWN_TEST_SECRET"
+        slv_new_env_output=$(slv env new service --name slv-action)
+        public_key=$(echo "$slv_new_env_output" | sed -n 's/^Public Key:[[:space:]]*//p')
+        secret_key=$(echo "$slv_new_env_output" | sed -n 's/^Secret Key:[[:space:]]*//p')
+        echo "public_key=$public_key" >> $GITHUB_OUTPUT
+        echo "secret_key=$secret_key" >> $GITHUB_OUTPUT
+
+    - name: Create a new SLV Vault
+      run: |
+        slv vault new -v pets.slv.yml --env-pubkey ${{ steps.new-slv-env.outputs.public_key }}
+        cat pets.slv.yml
+  
+    - name: Add a known secret to the vault
+      run: |
+        slv vault put -v pets.slv.yml --name AWESOME_CAT --value "Kuwan"
         cat pets.slv.yml
 
     - name: Load SLV Vault to Environment
       uses: ./
       with:
         vault: pets.slv.yml
-        env-secret-key: ${{ secrets.SLV_ENV_SECRET_KEY }}
+        env-secret-key: ${{ steps.new-slv-env.outputs.secret_key }}
         prefix: "MY_"
 
     - name: Verify SLV Secrets
@@ -62,5 +80,5 @@ jobs:
       run: |
         import sys, os
         sys.exit(
-            int(not os.environ["MY_AWESOME_CAT"] in os.environ["KNOWN_TEST_SECRET"])
+            int(not os.environ["MY_AWESOME_CAT"] in "Kuwan")
         )
