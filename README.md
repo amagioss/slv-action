@@ -56,4 +56,4 @@ The actions supports the following inputs:
 - `env-secret-key`: The SLV environment secret (key/binding) to use for the action
 - `prefix`: Prefix to use for the environment variable names along with the SLV secret name
 
-[slv]: https://github.com/amagioss/slv
+[slv]: https://slv.sh
