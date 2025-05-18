@@ -5,12 +5,14 @@ on:
     paths:
     - 'action/*'
     - 'action.yaml'
+    - '.github/workflows/test.yaml'
     branches:
     - main
   pull_request:
     paths:
     - 'action/*'
     - 'action.yaml'
+    - '.github/workflows/test.yaml'
   workflow_dispatch:
 
 defaults:
@@ -25,7 +27,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-        version: ['0.8.0', '0.9.2']
+        version: ['0.9.2', 'latest']
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -35,6 +37,14 @@ jobs:
       with:
         version: ${{ matrix.version }}
 
+    - name: Get latest SLV Version
+      id: slv-latest
+      run: |
+        echo "version=$(curl -s https://api.github.com/repos/amagioss/slv/releases/latest | jq -r .tag_name)" >> $GITHUB_OUTPUT
+
+    - name: Show SLV Version
+      run: |
+        echo "SLV Version: $(slv --version | grep "SLV Version")"
     - name: Capture SLV Version Installed
       run: |
         echo "SLV_VERSION_INSTALLED=$(slv --version | grep "SLV Version" | awk '{print $4}')" >> $GITHUB_ENV
@@ -43,11 +53,13 @@ jobs:
       shell: python
       env:
         SLV_VERSION_EXPECTED: ${{ matrix.version }}
+        SLV_LATEST_VERSION: ${{ steps.slv-latest.outputs.version }}
       run: |
         import sys, os
-        sys.exit(
-            int(not os.environ["SLV_VERSION_EXPECTED"] in os.environ["SLV_VERSION_INSTALLED"])
-        )
+        if os.environ["SLV_VERSION_EXPECTED"] == "latest":
+          sys.exit(0 if os.environ["SLV_VERSION_INSTALLED"] == os.environ["SLV_LATEST_VERSION"] else 1)
+        else:
+          sys.exit(0 if os.environ["SLV_VERSION_EXPECTED"] in os.environ["SLV_VERSION_INSTALLED"] else 1)
 
     - name: Create a new SLV Environment
       id: new-slv-env
@@ -71,6 +83,7 @@ jobs:
     - name: Load SLV Vault to Environment
       uses: ./
       with:
+        version: ${{ matrix.version }}
         vault: pets.slv.yml
         env-secret-key: ${{ steps.new-slv-env.outputs.secret_key }}
         prefix: "MY_"

@@ -167,7 +167,8 @@ async function setup() {
 async function getSecrets(vaultFile, slvEnvSecretKey) {
   const options = {
     env: {
-      ['SLV_ENV_SECRET_KEY']: slvEnvSecretKey
+      ...process.env,
+      'SLV_ENV_SECRET_KEY': slvEnvSecretKey
     },
     silent: true,
     ignoreReturnCode: true
