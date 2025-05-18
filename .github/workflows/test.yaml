@@ -40,11 +40,16 @@ jobs:
     - name: Get latest SLV Version
       id: slv-latest
       run: |
-        echo "version=$(curl -s https://api.github.com/repos/amagioss/slv/releases/latest | jq -r .tag_name)" >> $GITHUB_OUTPUT
+        latest_release_tag=$(curl -Ls \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/amagioss/slv/releases/latest | jq -r .tag_name)
+        echo "version=$latest_release_tag" >> $GITHUB_OUTPUT
 
     - name: Show SLV Version
       run: |
-        echo "SLV Version: $(slv --version | grep "SLV Version")"
+        echo "$(slv --version | grep "SLV Version")"
     - name: Capture SLV Version Installed
       run: |
         echo "SLV_VERSION_INSTALLED=$(slv --version | grep "SLV Version" | awk '{print $4}')" >> $GITHUB_ENV
