@@ -1,0 +1,46 @@
+name: Release Action
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight UTC
+
+jobs:
+  release-action:
+    name: Mirror Action
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout SLV
+        uses: actions/checkout@v4
+        with:
+          repository: amagioss/slv
+          path: slv
+      
+      - name: Get short commit SHA of SLV
+        id: slv_commit
+        run: |
+          cd slv
+          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Copy action files and tag to v1
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          rm -rf action*
+          mkdir -p action
+          cp -R slv/action/dist ./action/
+          cp -R slv/action.yaml ./
+          git add action*
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Updating action files from slv@${{ steps.slv_commit.outputs.sha }}"
+            git push
+            git tag -f v1
+            git push -f --tags
+          fi
